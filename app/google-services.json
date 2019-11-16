@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "294677481266",
+    "firebase_url": "https://webnode-17714.firebaseio.com",
+    "project_id": "webnode-17714",
+    "storage_bucket": "webnode-17714.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:294677481266:android:2c7448eebe20f5c7c2392b",
+        "android_client_info": {
+          "package_name": "com.crystrom.devicetracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "294677481266-6pr3cogr3hq0ej18k0n0p27u8j354595.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.crystrom.devicetracker",
+            "certificate_hash": "52fc289720aed1cfbb017c8c3b9bf4e1324db8db"
+          }
+        },
+        {
+          "client_id": "294677481266-jdoc7po2puckg3usje5iigtlqt4psqo9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARR2pBbISrziETejJ94JRjMotGpydIN6U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "294677481266-jdoc7po2puckg3usje5iigtlqt4psqo9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
