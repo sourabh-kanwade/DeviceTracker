@@ -2,6 +2,8 @@ package com.crystrom.devicetracker;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -9,13 +11,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.crystrom.devicetracker.Interfaces.IOnLoadLocationListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -29,7 +34,8 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback{
+
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, IOnLoadLocationListener {
 
     private GoogleMap mMap;
     private boolean mapReady,datasetInitialized = false;
@@ -38,17 +44,32 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     boolean activityStart = true;
     TextView deviceNameTxt, deviceId, battery,lastFix;
     ImageView geoFence,left,right,deviceInfo, batteryStatus, fixZoom;
-    ArrayList<String> deviceIds = new ArrayList<String>();
-
+    ArrayList<String> deviceIds = new ArrayList<>();
+    ArrayList<LatLng> mLatLngs=new ArrayList<>();
     //Holds the latest version in the database. Assign it in your OnDataChange and work with this data.
     UserNode currentUser = null;
     float zoomLevel;
+    private IOnLoadLocationListener mListener;
 
     //intializing currentDevice as 0, add and substract when the user presses the navigation buttons.
-    int currentDevice,previousDevice = 0;
+    int currentDevice=0,previousDevice = 0;
 
     //Collection of Markers
-    private HashMap<String,Marker> markers = new HashMap<String,Marker>();
+    private HashMap<String,Marker> markers = new HashMap<>();
+
+    @Override
+    public void onLoadLocationSuccess(ArrayList<MyLatLang> latLngs) {
+            mLatLngs=new ArrayList<>();
+            for(MyLatLang myLatLang:latLngs){
+                LatLng conv=new LatLng(myLatLang.getLatitude(),myLatLang.longitude);
+                mLatLngs.add(conv);
+            }
+    }
+
+    @Override
+    public void onLoadLocationFailed(String message) {
+
+    }
 
     public interface MapOperations{
         void onLocationChangeUpdater(Object dataset);
@@ -59,22 +80,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map1);
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map1);
         mapFragment.getMapAsync(this);
 
         //device name textview
-        deviceNameTxt = (TextView)findViewById(R.id.textView);
+        deviceNameTxt = findViewById(R.id.textView);
         deviceNameTxt.setVisibility(View.INVISIBLE);
 
         //device id
-        deviceId = (TextView) findViewById(R.id.device_name);
+        deviceId =  findViewById(R.id.device_name);
 
         //devicelastfix
-        lastFix = (TextView)findViewById(R.id.last_fix);
+        lastFix = findViewById(R.id.last_fix);
 
         //battery status
-        battery = (TextView)findViewById(R.id.battery);
+        battery = findViewById(R.id.battery);
 
         firebaseDatabase = FirebaseDatabase.getInstance();
         //Reference string will be the root node and the username. Under this
@@ -84,7 +105,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot != null) {
-
                     onLocationChangeUpdater(dataSnapshot.getValue(UserNode.class));
                 }else{
                     Toast.makeText(getApplicationContext(),"Username/Password Invalid",Toast.LENGTH_SHORT).show();
@@ -103,8 +123,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         geoFence.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-
+                Toast.makeText(getApplicationContext(),"geoFence Clicked",Toast.LENGTH_LONG).show();
 
             }
         });
@@ -126,7 +145,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        left = (ImageView)findViewById(R.id.navigate_left);
+        left = findViewById(R.id.navigate_left);
         left.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -151,7 +170,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        right = (ImageView)findViewById(R.id.navigate_Right);
+        right = findViewById(R.id.navigate_Right);
         right.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -178,7 +197,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        deviceInfo = (ImageView) findViewById(R.id.details);
+        deviceInfo =  findViewById(R.id.details);
         deviceInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -187,7 +206,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         //This is not interactable. but shows battery as color red/ green as status
-        batteryStatus = (ImageView) findViewById(R.id.battery_status);
+        batteryStatus =  findViewById(R.id.battery_status);
 
     }
 
@@ -221,7 +240,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                                 //add the devices in to the markers hashmap.
                                 markers.put(device.getDeviceId(), mark);
-
                                 //Add the device ID so we can navigate, show data about different devices later.
                                 deviceIds.add(device.getDeviceId());
 
@@ -246,10 +264,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                                 LatLng latLng = new LatLng((double)device.getLatitude(), (double)device.getLongitude());
                                 Marker mark = markers.get(device.getDeviceId());
-                                //before setting to new position, do a runnable to smoothly move the marker from previous
-                                //point to current point using linear interpolation
-                                //refer this stack overflow question for more information
-                                //http://stackoverflow.com/questions/15905359/how-to-change-the-position-of-a-marker-on-a-android-map-v2
                                 mark.setPosition(latLng);
                                 mark.setTag(device);
                                 if (mark.getTitle().equals(deviceIds.get(currentDevice))){
@@ -272,7 +286,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
+    private void initArea(){
+        mListener=this;
+        databaseReference.child("Geo_Locations").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                ArrayList<MyLatLang> list =new ArrayList<>();
+                for(DataSnapshot dataSnapshot1:dataSnapshot.getChildren()){
+                    MyLatLang latLng=dataSnapshot1.getValue(MyLatLang.class);
+                    list.add(latLng);
+                }
+                SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map1);
+                mapFragment.getMapAsync(MapsActivity.this);
+                mListener.onLoadLocationSuccess(list);
+            }
 
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                mListener.onLoadLocationFailed(databaseError.getMessage());
+            }
+        });
+//    databaseReference.child("Geo_Locations").setValue(mLatLngs).addOnCompleteListener(new OnCompleteListener<Void>() {
+//        @Override
+//        public void onComplete(@NonNull Task<Void> task) {
+//            Toast.makeText(getApplicationContext(),"Success",Toast.LENGTH_LONG).show();
+//        }
+//    }).addOnFailureListener(new OnFailureListener() {
+//        @Override
+//        public void onFailure(@NonNull Exception e) {
+//            Toast.makeText(getApplicationContext(),"Failed",Toast.LENGTH_LONG).show();
+//        }
+//    });
+    }
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -286,19 +331,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mapReady = true;
-
- /*       // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
-        initialize();
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        initArea();
+        for (LatLng latLng :mLatLngs){
+            mMap.addCircle(new CircleOptions()
+                    .center(latLng)
+                    .radius(500)
+                    .strokeColor(Color.RED).fillColor(0x0000ffff)
+                    .strokeWidth(5.0f));
+        }
     }
-
-
-    /**
-     * Initializes the node with our dataset to give consistent approach.
-     * remove during production
-     */
 
     private void initialize(){
 
@@ -315,14 +357,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        databaseReference.setValue(user1);
 
     }
-
-
-    /**
-     * This method handles the Updation of the UI based on the currentDevice
-     * use the current Device IDs to fetch the marker and get their latlng
-     * update the camera position to the latlng obtained from the current marker
-     * @param currentDeviceIds
-     */
 
     private void updateCameraUI(int currentDeviceIds, int previousDeviceIds){
         if(mapReady == false || datasetInitialized == false){

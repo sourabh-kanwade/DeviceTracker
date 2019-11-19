@@ -7,7 +7,15 @@ public class UserNode {
     private String userName;
     private String password;
     private ArrayList<Device> devices = new ArrayList<Device>();
+    private ArrayList<GeoFenceList> mGeoFenceLists=new ArrayList<>();
 
+    public ArrayList<GeoFenceList> getGeoFenceLists() {
+        return mGeoFenceLists;
+    }
+
+    public void setGeoFenceLists(ArrayList<GeoFenceList> geoFenceLists) {
+        mGeoFenceLists = geoFenceLists;
+    }
 
     public String getUserName() {
         return userName;
@@ -35,10 +43,11 @@ public class UserNode {
 
 
 
-    public UserNode(String userName, String password, ArrayList<Device> devices) {
+    public UserNode(String userName, String password, ArrayList<Device> devices,ArrayList<GeoFenceList> mGeoFenceLists) {
         this.userName = userName;
         this.password = password;
         this.devices = devices;
+        this.mGeoFenceLists=mGeoFenceLists;
     }
 
     public boolean equalsTo(UserNode user1){
